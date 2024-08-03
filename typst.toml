@@ -1,0 +1,11 @@
+[package]
+name = "matrix-utils"
+version = "0.1.0"
+entrypoint = "src/lib.typ"
+license = "MIT"
+authors = ["Johannes Wolf <https://github.com/yonatankremer>"]
+repository = add-after-push
+description = "Matrices, complex numbers utility and arithmetic"
+keywords = ["complex", "imaginary", "matrix", "linear", "matrices", "algebra"]
+disciplines = ["engineering", "mathematics", "physics"]
+categories = ["scripting"]
