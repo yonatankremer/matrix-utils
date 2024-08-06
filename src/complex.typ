@@ -1,20 +1,24 @@
-//todo - add visual fraction support, powers, polar form
-
+// TODO - non-decimal fraction visualization, powers, argument
 #import "custom-type.typ": *
 
-#let cinit(re:0,im:0) = {
+
+// "private" utilities; use the "complex" type
+
+#let _cinit(re,im) = {
+  //assert(is-number(re) and is-number(im), message: "inputs must be numbers.")
   let dic = custom-type("complex")
+  let vals = (re,im)
   dic.insert("re", re)
   dic.insert("im", im)
   return dic
 }
 
-#let cre(n) = n.at("re")
-#let cim(n) = n.at("im")
+#let cre-num(n) = n.at("re")
+#let cim-num(n) = n.at("im")
 
-#let cform(n) = {
-  let re = cre(n)
-  let im = cim(n)
+#let _cform(n) = { // black magic
+  let re = cre-num(n)
+  let im = cim-num(n)
   let resgn = none
   let imsgn = none
 
@@ -34,7 +38,7 @@
   }
 
   else if re == 0 and im != 0 {
-    if im == 1 or im == -1 {
+    if im == 1 {
       $imsgn i$
     }
     else {
@@ -43,40 +47,131 @@
   }
 
   else {
-    if im == 1 or im == -1 {
+    if im == 1 {
       $resgn re imsgn i$
     }
     else {
       $resgn re imsgn im i$
     }
   }
-
-
-  
 }
 
-#let _cadd(l,r) = cinit(
-  re: cre(l)+cre(r),
-  im: cim(l)+cim(r)
-)
-#let cadd(l,r) = cform(_cadd(l,r))
+#let _cunform(n) = {
 
-#let _csub(l,r) = (
-  re: cre(l)-cre(r),
-  im: cim(l)-cim(r)
-)
-#let csub(l,r) = cform(_csub(l,r))
+  if n == none or n == []  {
+    return _cinit(0,0)
+  }
 
-#let _cmul(l,r) = cinit(
-  re: cre(l) * cre(r) - cim(l) * cim(r),
-  im: cre(l) * cim(r) + cim(l) * cre(r)
-)
-#let cmul(l,r) = cform(_cmul(l,r))
+  if n.has("children") {
+    n = n.children.map(x => str(x.text)).join()
+    return n
+  }
 
-#let _cconj(n) = cinit(re: cre(n), im: -cim(n))
-#let cconj(n) = cform(_cconj(n))
+  else if n.has("body") {
+    n = n.body.map(x => str(x.text)).join()
+  }
 
-#let _cabs(n) = calc.sqrt(calc.pow(cre(n),2)+calc.pow(cim(n),2))
-#let cabs(n) = cform(_cabs(n))
-#let _carg(n) = calc.atan(cim(n)/cre(n))
-#let carg(n) = cform(_carg(n))
+  else if n.has("text") {
+    n = n.text
+  }
+
+
+
+  let i-index = n.position("i")
+
+  if i-index == none { // i not found, a real number
+    return _cinit(to-number(n),0)
+  }
+
+  if i-index == 0 { // just i
+    return _cinit(0,1)
+  }
+
+
+  let numbers = "0123456789"
+  i-index -= 1
+
+  while i-index > 0 and str(n).at(i-index) in numbers {
+    i-index -= 1
+  }
+
+  let re = n.slice(0,i-index)
+  let im = n.slice(i-index,n.len()-1)
+
+  re = to-number(re)
+  im = to-number(im)
+
+
+  return _cinit(re,im)
+}
+
+
+// from here on, all recieve and return content. use of "primitive" functions is prefered.
+// use the unform function in the start, form when returning.
+
+
+#let complex(re,im) = _cform(_cinit(re,im))
+
+#let cre(n) = _cform(cre-num(n))
+#let cim(n) = _cform(cim-num(n))
+
+#let ceq(l,r) = {
+  let l = _cunform(l)
+  let r = _cunform(r)
+  return cre-num(l) == cre-num(r) and cim-num(l) == cim-num(r)
+}
+
+#let cabs(n) = {
+  let n = _cunform(n)
+  let real = cre-num(n)
+  let im = cim-num(n)
+  let real-sq = calc.pow(real,2)
+  let im-sq = calc.pow(im,2)
+  let out = _cinit(calc.sqrt(real-sq+im-sq), 0)
+  return _cform(out)
+
+}
+
+#let cadd(l,r) = {
+  let l = _cunform(l)
+  let r = _cunform(r)
+
+  let re = cre-num(l) + cre-num(l)
+  let im = cim-num(l) + cim-num(r)
+
+  let out = _cinit(re,im)
+  return _cform(out)
+}
+
+#let csub(l,r) = {
+  let l = _cunform(l)
+  let r = _cunform(r)
+
+  let re = cre-num(l) - cre-num(l)
+  let im = cim-num(l) - cim-num(r)
+
+  let out = _cinit(re,im)
+  return _cform(out)
+}
+
+#let cmul(l,r) = {
+  let l = _cunform(l)
+  let r = _cunform(r)
+
+  let l-re = cre-num(l)
+  let l-im = cim-num(l)
+  let r-re = cre-num(r)
+  let r-im = cim-num(r)
+
+  let re = l-re * r-re - l-im * r-im
+  let im = l-re * r-im + l-im * r-re
+
+  let out = _cinit(re,im)
+  return _cform(out)
+}
+
+#let cconj(n) = {
+  let n = _cunform(n)
+  let out = _cinit(cre-num(re),-cre-num(im))
+  return _cform(out)
+}

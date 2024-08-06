@@ -7,44 +7,49 @@
 #let _mtrans(m) = {
   let i = 0
   let j = 0
-  let new = _mrows(m)
 
-  while i < new.at(0).len() {
-    while j < new.len() {
-      let temp = new.at(j).at(i)
-      new.at(j).at(i) = new.at(i).at(j)
-      new.at(i).at(j) = temp
+  while i < m.at(0).len() {
+    while j < m.len() {
+      let temp = m.at(j).at(i)
+      m.at(j).at(i) = m.at(i).at(j)
+      m.at(i).at(j) = temp
       j += 1
     }
     i += 1
   }
-  return new
+  return m
 }
 
 // init mat "object"
 #let minit(m) = {
   let dic = custom-type("matrix")
   let rows = _mrows(m)
+  let first-len = rows.at(0).len()
+  assert(rows.all(x => x.len() == first-len))
   dic.insert("rows", rows)
   dic.insert("cols", _mtrans(rows))
-  dic.insrt("x", rows.at(0).len())
+  dic.insert("x", rows.at(0).len())
   dic.insert("y", rows.len())
   return dic
 }
 
 #let mrows(m) = m.at("rows")
+#let mrow(m,idx) = mrows(m).at(idx)
 #let mcols(m) = m.at("cols")
+#let mcol(m,idx) = mcols(m).at(idx)
 #let mget(m,x, y) = m.at("cols").at(x).at(y)
 #let mx(m) = m.at("x")
 #let my(m) = m.at("y")
 #let mtrans(m) = minit(_mtrans(m))
-#let mconj(m) = {
-  let i = 0
-  let j = 0
-  let new = _mrows(m)
 
-  while i < new.at(0).len() {
-    while j < new.len() {
+#let mconj(m) = {
+  let row = 0
+  let col = 0
+  let x = mx(m)
+  let y = my(m)
+
+  while i < x {
+    while j < y {
       let temp = cconj(new.at(j).at(i))
       new.at(j).at(i) = cconj(new.at(i).at(j))
       new.at(i).at(j) = temp
@@ -52,7 +57,7 @@
     }
     i += 1
   }
-  return new
+  return minit(new)
 }
 
 
@@ -113,7 +118,7 @@
   return minit(rows)
 }
 
-#let mtr(m) = {
+#let mtrace(m) = {
   let x = mx(m)
   assert(x == my(m))
 
@@ -126,7 +131,7 @@
   return sum
 }
 
-#let mscal-mul(l,r) = {
+#let mscal(l,r) = {
   assert(l.len == r.len)
   r.map(x => x.map(y => cmul(l, y)))
 }
