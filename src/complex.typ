@@ -56,15 +56,12 @@
   }
 }
 
-#let _cunform(n) = {
+#let content-to-string(n) = {
 
-  if n == none or n == []  {
-    return _cinit(0,0)
-  }
+  if type(n).text == "string" {}
 
-  if n.has("children") {
+  else if n.has("children") {
     n = n.children.map(x => str(x.text)).join()
-    return n
   }
 
   else if n.has("body") {
@@ -74,36 +71,67 @@
   else if n.has("text") {
     n = n.text
   }
+  return n.replace(" ","")
+}
 
+#let sign-split(n) = {
 
+  let parts = ()
+  let sum = ""
+  let i = 0
 
-  let i-index = n.position("i")
+  while i < n.len() {
+    let char = n.at(i)
 
-  if i-index == none { // i not found, a real number
+    if i > 0 and (char == "+" or char == "-") {
+      parts.push(sum)
+      sum = ""
+    }
+    sum += char
+    i += 1
+  }
+
+  if sum != "" {
+    parts.push(sum)
+  }
+
+  return parts
+}
+
+#let _cunform(n) = {
+  
+  if n == none or n == []  {
+    return _cinit(0,0)
+  }
+
+  
+  n = content-to-string(n)
+  if not n.contains("i") {
     return _cinit(to-number(n),0)
   }
 
-  if i-index == 0 { // just i
-    return _cinit(0,1)
+  let sgn-split = sign-split(n).map(x => x.replace("i","")).map(
+    x => {
+      if x == "-" {
+        "-1"
+      }
+      else if x == "+" or x == "" {
+        "1"
+      }
+      else {
+        x
+      }
+    }
+  )
+
+  if sgn-split.len() == 1 { // we know there's an i
+    return _cinit(0,to-number(sgn-split.at(0)))
   }
 
-
-  let numbers = "0123456789"
-  i-index -= 1
-
-  while i-index > 0 and str(n).at(i-index) in numbers {
-    i-index -= 1
-  }
-
-  let re = n.slice(0,i-index)
-  let im = n.slice(i-index,n.len()-1)
-
-  re = to-number(re)
-  im = to-number(im)
-
-
-  return _cinit(re,im)
+  return _cinit(to-number(sgn-split.at(0)),to-number(sgn-split.at(1)))
 }
+
+
 
 
 // from here on, all recieve and return content. use of "primitive" functions is prefered.
