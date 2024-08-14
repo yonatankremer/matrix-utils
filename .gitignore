@@ -1,2 +1,4 @@
 .vscode
 .DS_Store
+# Probably add exceptions to this later
+*.pdf
