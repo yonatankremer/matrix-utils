@@ -13,12 +13,12 @@
   return dic
 }
 
-#let cre-num(n) = n.at("re")
-#let cim-num(n) = n.at("im")
+#let _cre-num(n) = n.at("re")
+#let _cim-num(n) = n.at("im")
 
 #let _cform(n) = { // black magic
-  let re = cre-num(n)
-  let im = cim-num(n)
+  let re = _cre-num(n)
+  let im = _cim-num(n)
   let resgn = none
   let imsgn = none
 
@@ -56,25 +56,31 @@
   }
 }
 
-#let content-to-string(n) = {
+#let _content-to-string(n) = {
 
-  if type(n).text == "string" {}
+  let out = n
+  let ty = type(n).text
 
-  else if n.has("children") {
-    n = n.children.map(x => str(x.text)).join()
+
+  if ty == "string" {
+    out = n
   }
-
-  else if n.has("body") {
-    n = n.body.map(x => str(x.text)).join()
+  else if ty == "content" {
+    if n.has("text") {
+      out = _content-to-string(n.text)
+    }
+    else if n.has("body") {
+      out = _content-to-string(n.body)
+    }
+    else if n.has("children")  {
+    out = n.children.map(x => _content-to-string(x)).join()
+    }
   }
-
-  else if n.has("text") {
-    n = n.text
-  }
-  return n.replace(" ","")
+  out = out.replace(" ","")
+  return out
 }
 
-#let sign-split(n) = {
+#let _sign-split(n) = {
 
   let parts = ()
   let sum = ""
@@ -94,23 +100,22 @@
   if sum != "" {
     parts.push(sum)
   }
-
   return parts
 }
 
-#let _cunform(n) = {
-  
+#let _cunform(n) = { // blacker magic
   if n == none or n == []  {
     return _cinit(0,0)
   }
-
-  
-  n = content-to-string(n)
+ 
+  n = _content-to-string(n)
   if not n.contains("i") {
     return _cinit(to-number(n),0)
   }
 
-  let sgn-split = sign-split(n).map(x => x.replace("i","")).map(
+
+
+  let sgn-split = _sign-split(n).map(x => x.replace("i","")).map(
     x => {
       if x == "-" {
         "-1"
@@ -134,25 +139,25 @@
 
 
 
-// from here on, all recieve and return content. use of "primitive" functions is prefered.
+// from here on, all recieve and return content. use of "primitive" functions privately is prefered though.
 // use the unform function in the start, form when returning.
 
 
 #let complex(re,im) = _cform(_cinit(re,im))
 
-#let cre(n) = _cform(cre-num(n))
-#let cim(n) = _cform(cim-num(n))
+#let cre(n) = _cform(_cre-num(n))
+#let cim(n) = _cform(_cim-num(n))
 
 #let ceq(l,r) = {
   let l = _cunform(l)
   let r = _cunform(r)
-  return cre-num(l) == cre-num(r) and cim-num(l) == cim-num(r)
+  return _cre-num(l) == _cre-num(r) and _cim-num(l) == _cim-num(r)
 }
 
 #let cabs(n) = {
   let n = _cunform(n)
-  let real = cre-num(n)
-  let im = cim-num(n)
+  let real = _cre-num(n)
+  let im = _cim-num(n)
   let real-sq = calc.pow(real,2)
   let im-sq = calc.pow(im,2)
   let out = _cinit(calc.sqrt(real-sq+im-sq), 0)
@@ -164,8 +169,8 @@
   let l = _cunform(l)
   let r = _cunform(r)
 
-  let re = cre-num(l) + cre-num(l)
-  let im = cim-num(l) + cim-num(r)
+  let re = _cre-num(l) + _cre-num(l)
+  let im = _cim-num(l) + _cim-num(r)
 
   let out = _cinit(re,im)
   return _cform(out)
@@ -175,8 +180,8 @@
   let l = _cunform(l)
   let r = _cunform(r)
 
-  let re = cre-num(l) - cre-num(l)
-  let im = cim-num(l) - cim-num(r)
+  let re = _cre-num(l) - _cre-num(l)
+  let im = _cim-num(l) - _cim-num(r)
 
   let out = _cinit(re,im)
   return _cform(out)
@@ -186,10 +191,10 @@
   let l = _cunform(l)
   let r = _cunform(r)
 
-  let l-re = cre-num(l)
-  let l-im = cim-num(l)
-  let r-re = cre-num(r)
-  let r-im = cim-num(r)
+  let l-re = _cre-num(l)
+  let l-im = _cim-num(l)
+  let r-re = _cre-num(r)
+  let r-im = _cim-num(r)
 
   let re = l-re * r-re - l-im * r-im
   let im = l-re * r-im + l-im * r-re
@@ -200,6 +205,6 @@
 
 #let cconj(n) = {
   let n = _cunform(n)
-  let out = _cinit(cre-num(re),-cre-num(im))
+  let out = _cinit(_cre-num(n),-_cre-num(n))
   return _cform(out)
 }

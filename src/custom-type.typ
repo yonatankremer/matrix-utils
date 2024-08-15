@@ -8,7 +8,7 @@
     return t.at("type", default: "dictionary") 
   }
   if ty == "array" {
-    return t.at("type", default: "array")
+    return "array"
   }
   else {
     return type(t)
