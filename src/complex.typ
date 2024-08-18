@@ -57,7 +57,6 @@
 }
 
 #let _content-to-string(n) = {
-
   let out = n
   let ty = type(n).text
 
@@ -73,12 +72,14 @@
       out = _content-to-string(n.body)
     }
     else if n.has("children")  {
-    out = n.children.map(x => _content-to-string(x)).join()
+    out = n.children.map(_content-to-string).join()
     }
   }
-  out = out.replace(" ","")
+  out = out.replace([#sym.minus].text,"-")
   return out
 }
+
+
 
 #let _sign-split(n) = {
 
@@ -169,7 +170,7 @@
   let l = _cunform(l)
   let r = _cunform(r)
 
-  let re = _cre-num(l) + _cre-num(l)
+  let re = _cre-num(l) + _cre-num(r)
   let im = _cim-num(l) + _cim-num(r)
 
   let out = _cinit(re,im)
@@ -180,7 +181,7 @@
   let l = _cunform(l)
   let r = _cunform(r)
 
-  let re = _cre-num(l) - _cre-num(l)
+  let re = _cre-num(l) - _cre-num(r)
   let im = _cim-num(l) - _cim-num(r)
 
   let out = _cinit(re,im)
@@ -205,6 +206,6 @@
 
 #let cconj(n) = {
   let n = _cunform(n)
-  let out = _cinit(_cre-num(n),-_cre-num(n))
+  let out = _cinit(_cre-num(n),-_cim-num(n))
   return _cform(out)
 }
