@@ -1,9 +1,8 @@
-#import "custom-type.typ": *
 #import "complex.typ": *
 
 //todo  - determinant?, adj, inverse, rank?, row-reduce?, diagonal, row operations, is symmtetric/hermitian/unitary/orth...
 
-#let _mrows(m) = m.fields().body.fields().rows
+#let _mrows-content(m) = m.rows
 #let _mtrans(m) = {
   let i = 0
   let j = 0
@@ -23,7 +22,7 @@
 // init mat "object"
 #let minit(m) = {
   let dic = custom-type("matrix")
-  let rows = _mrows(m)
+  let rows = _mrows-content(m)
   let first-len = rows.at(0).len()
   assert(rows.all(x => x.len() == first-len))
   dic.insert("rows", rows)
@@ -32,21 +31,28 @@
   dic.insert("y", rows.len())
   return dic
 }
+#let _mform(m) = {
+  let con = m.map(x => x.map(y => y))
+  return math.mat(..con)
+}
 
-#let mrows(m) = m.at("rows")
-#let mrow(m,idx) = mrows(m).at(idx)
-#let mcols(m) = m.at("cols")
-#let mcol(m,idx) = mcols(m).at(idx)
-#let mget(m,x, y) = m.at("cols").at(x).at(y)
-#let mx(m) = m.at("x")
-#let my(m) = m.at("y")
-#let mtrans(m) = minit(_mtrans(m))
+#let _mrows(m) = minit(m).at("rows")
+#let mrow(m,idx) = _mrows(m).at(idx)
+#let _mcols(m) = minit(m).at("cols")
+#let mcol(m,idx) = _mcols(m).at(idx)
+#let mget(m,x, y) = minit(m).at("cols").at(x).at(y)
+#let mx(m) = minit(m).at("x")
+#let my(m) = minit(m).at("y")
+#let mtrans(m) = _mform(minit(_mtrans(m)))
 
 #let mconj(m) = {
   let row = 0
   let col = 0
   let x = mx(m)
   let y = my(m)
+  let new = m
+  let i = 0
+  let j = 0
 
   while i < x {
     while j < y {
@@ -57,12 +63,11 @@
     }
     i += 1
   }
-  return minit(new)
+  return _mform(new)
 }
 
 
 #let madd(l,r) = {
-
   let x = mx(l)
   let y = my(l)
   assert(x == mx(r) and y == my(r))
@@ -84,19 +89,17 @@
 // row operations
 #let mrow-switch(m,st,nd) = {
   let new = m
-  let temp = mrows(new).at(st)
-  mrows(new).at(st) = mrows(new).at(nd)
-  mrows(new).at(nd) = temp
+  let temp = _mrows(new).at(st)
+  _mrows(new).at(st) = _mrows(new).at(nd)
+  _mrows(new).at(nd) = temp
 }
 #let mrow-mul(m,row,scalar) = {
   let new = m
-  let new-row = mrows(m).at(row).map(x => cmul(x,scalar))
-  mrows(new).at(row) = new-row
+  let new-row = _mrows(m).at(row).map(x => cmul(x,scalar))
+  _mrows(new).at(row) = new-row
   return new
 }
 //#let mropw-addrows type 3 do later
-
-
 
 #let mdiaginit(..vals) = {
   let i = 0
@@ -182,14 +185,9 @@
   while i < r {
     let cur-row = ()
     while j < c {
-      cur-row.push(mscalmul(mrows(l).at(i),mcols(r).at(j)))
+      cur-row.push(mscalmul(_mrows(l).at(i),_mcols(r).at(j)))
     }
     rows.push(cur-row)
   }
   return minit(rows)
-}
-
-#let mform(m) = {
-  let con = m.map(x => x.map(y => y))
-  return math.mat(..con)
 }

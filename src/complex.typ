@@ -1,18 +1,66 @@
-// TODO - non-decimal fraction visualization, powers, argument
-#import "custom-type.typ": *
-
-
-// "private" utilities; use the "complex" type
-
-#let _cinit(re,im) = {
-  //assert(is-number(re) and is-number(im), message: "inputs must be numbers.")
-  let dic = custom-type("complex")
-  let vals = (re,im)
-  dic.insert("re", re)
-  dic.insert("im", im)
-  return dic
+#let _is-number(t) = {
+  let ty = type(t)
+  return ty == "integer" or ty == "float"
 }
 
+#let _to-number(n) = {
+  if n == "" {
+    return 0
+  }
+
+  if n == "+" {
+    return 1
+  }
+
+  if n == "-" {
+    return -1
+  }
+  
+  if n.contains(".") {
+    return float(n)
+  }
+  
+  return int(n)
+}
+
+#let _content-to-string(n) = {
+  let out = n
+  let ty = type(n)
+
+  if n == [] {
+    return ""
+  }
+
+  else if ty == "string" {
+    out = n
+  }
+  else if ty == "content" {
+    if n.has("text") {
+      out = _content-to-string(n.text)
+    }
+    else if n.has("body") {
+      out = _content-to-string(n.body)
+    }
+    else if n.has("children")  {
+    out = n.children.map(_content-to-string).join()
+    }
+
+  }
+  else if _is-number(n) {
+    out = str(n)
+  }
+  
+
+  out = out.replace([#sym.minus].text,"-")
+  return out
+}
+
+#let _cinit(re,im) = {
+  //assert(_is-number(re) and _is-number(im), message: "inputs must be numbers.")
+  let vals = (re,im)
+  let dic = ("re":re, "im":im, "type": "complex")
+  return dic
+}
 #let _cre-num(n) = n.at("re")
 #let _cim-num(n) = n.at("im")
 
@@ -56,31 +104,6 @@
   }
 }
 
-#let _content-to-string(n) = {
-  let out = n
-  let ty = type(n).text
-
-
-  if ty == "string" {
-    out = n
-  }
-  else if ty == "content" {
-    if n.has("text") {
-      out = _content-to-string(n.text)
-    }
-    else if n.has("body") {
-      out = _content-to-string(n.body)
-    }
-    else if n.has("children")  {
-    out = n.children.map(_content-to-string).join()
-    }
-  }
-  out = out.replace([#sym.minus].text,"-")
-  return out
-}
-
-
-
 #let _sign-split(n) = {
 
   let parts = ()
@@ -111,10 +134,8 @@
  
   n = _content-to-string(n)
   if not n.contains("i") {
-    return _cinit(to-number(n),0)
+    return _cinit(_to-number(n),0)
   }
-
-
 
   let sgn-split = _sign-split(n).map(x => x.replace("i","")).map(
     x => {
@@ -131,20 +152,11 @@
   )
 
   if sgn-split.len() == 1 { // we know there's an i
-    return _cinit(0,to-number(sgn-split.at(0)))
+    return _cinit(0,_to-number(sgn-split.at(0)))
   }
 
-  return _cinit(to-number(sgn-split.at(0)),to-number(sgn-split.at(1)))
+  return _cinit(_to-number(sgn-split.at(0)),_to-number(sgn-split.at(1)))
 }
-
-
-
-
-// from here on, all recieve and return content. use of "primitive" functions privately is prefered though.
-// use the unform function in the start, form when returning.
-
-
-#let complex(re,im) = _cform(_cinit(re,im))
 
 #let cre(n) = _cform(_cre-num(n))
 #let cim(n) = _cform(_cim-num(n))
